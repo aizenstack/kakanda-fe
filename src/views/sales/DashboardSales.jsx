@@ -54,6 +54,7 @@ export default function DashboardSales() {
     const [showHoldModal, setShowHoldModal] = useState(false);
     const [showAddCustomer, setShowAddCustomer] = useState(false);
     const [addCustomerInitialName, setAddCustomerInitialName] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleOpenAddCustomer = useCallback((name = '') => {
         setAddCustomerInitialName(name);
@@ -200,7 +201,7 @@ export default function DashboardSales() {
                     price: p.inventories?.[0]?.final_price || 0,
                     stock: p.inventories?.[0]?.stock || 0
                 }));
-                
+
                 // SPEED FIX: Jika scan barcode menghasilkan match sempurna
                 const exactMatch = mapped.find(p => p.barcode === q);
                 if (exactMatch) {
@@ -272,10 +273,14 @@ export default function DashboardSales() {
     }, [cart.length]);
 
     const handleConfirmPay = useCallback(async () => {
+        if (isSubmitting) return;
+
         const pm = availablePaymentMethods.find(m => m.id === paymentMethod);
         const pmType = paymentMethod === 'Voucher' ? 'Voucher' : pm?.type || '';
 
         if (pmType === 'Tunai' && cashNum < grandTotal) return;
+
+        setIsSubmitting(true);
 
         let voucherPotongan = 0;
         if (pmType === 'Voucher') {
@@ -373,7 +378,7 @@ export default function DashboardSales() {
             setTxCountToday(prev => prev + 1);
             searchRef.current?.focus();
             soundService.playSuccess(); // Lonceng Kas ketika selesai
-            
+
             const nextTrxRes = await saleService.generateTrxNumber();
             setCurrentTrxNumber(nextTrxRes.data.trx_number);
 
@@ -385,8 +390,10 @@ export default function DashboardSales() {
                 detail: err.response?.data?.message || 'Gagal menyimpan transaksi',
                 life: 4000
             });
+        } finally {
+            setIsSubmitting(false);
         }
-    }, [availablePaymentMethods, paymentMethod, cashNum, grandTotal, currentTrxNumber, user, selectedCustomer, globalDiscVal, globalDisc, transactionNote, cart, subtotal, tax, kembalian, customerName, voucherMember, setCart, setAddQty]);
+    }, [availablePaymentMethods, paymentMethod, cashNum, grandTotal, currentTrxNumber, user, selectedCustomer, globalDiscVal, globalDisc, transactionNote, cart, subtotal, tax, kembalian, customerName, voucherMember, setCart, setAddQty, isSubmitting]);
 
     const showScanFeedback = useCallback((type, message, barcode) => {
         if (scanFeedbackTimer.current) clearTimeout(scanFeedbackTimer.current);
@@ -590,6 +597,7 @@ export default function DashboardSales() {
                 customerName={customerName}
                 transactionNote={transactionNote}
                 voucherMember={voucherMember}
+                isSubmitting={isSubmitting}
             />
 
             <PosExitModal

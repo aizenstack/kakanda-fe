@@ -66,7 +66,11 @@ export function useKeyboardShortcuts({
             }
 
             if (showPayModal) {
-                if (e.key === 'Enter' || e.key === 'y' || e.key === 'Y') onConfirmPay();
+                if (e.key === 'Enter' || e.key === 'y' || e.key === 'Y') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onConfirmPay();
+                }
                 if (e.key === 'Escape') setShowPayModal(false);
                 return;
             }

@@ -8,6 +8,7 @@ export default function PosPayModal({
     cashRef, cashNum, kembalian,
     handleConfirmPay, customerName,
     transactionNote, voucherMember,
+    isSubmitting = false,
 }) {
     if (!showPayModal) return null;
 
@@ -74,6 +75,7 @@ export default function PosPayModal({
                             grandTotal={grandTotal}
                             cashNum={cashNum}
                             kembalian={kembalian}
+                            isSubmitting={isSubmitting}
                         />
                     )}
 
@@ -157,16 +159,18 @@ export default function PosPayModal({
                                             placeholder="0"
                                             className="pos-modal-input"
                                             style={{ borderColor: '#d97706' }}
+                                            disabled={isSubmitting}
                                         />
                                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                                             {[sisaBayar, ...([5000, 10000, 20000, 50000].filter(n => n > sisaBayar))].slice(0, 5).map(nominal => (
                                                 <button key={nominal} onClick={() => setCashInput(String(nominal))} onMouseDown={(e) => e.preventDefault()}
+                                                    disabled={isSubmitting}
                                                     style={{
                                                         flex: 1, height: 30, border: '1px solid', borderRadius: 6,
                                                         background: cashInput == nominal ? '#fffbeb' : '#f9fafb',
                                                         borderColor: cashInput == nominal ? '#d97706' : '#e5e7eb',
                                                         color: cashInput == nominal ? '#d97706' : '#374151',
-                                                        fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer'
+                                                        fontSize: '0.68rem', fontWeight: 700, cursor: isSubmitting ? 'not-allowed' : 'pointer'
                                                     }}
                                                 >
                                                     {nominal === sisaBayar ? 'Pas' : new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(nominal)}
@@ -193,6 +197,7 @@ export default function PosPayModal({
                     <button
                         className="pos-modal-confirm"
                         disabled={
+                            isSubmitting ||
                             (pmType === 'Tunai' && cashNum < grandTotal) ||
                             (pmType === 'Voucher' && !voucherMember) ||
                             (pmType === 'Voucher' && voucherMember && (() => {
@@ -202,7 +207,7 @@ export default function PosPayModal({
                         }
                         onClick={handleConfirmPay}
                     >
-                        KONFIRMASI BAYAR
+                        {isSubmitting ? 'MEMPROSES...' : 'KONFIRMASI BAYAR'}
                         <span style={{ background: 'rgba(255,255,255,0.18)', borderRadius: 4, padding: '1px 7px', fontSize: '0.7rem', marginLeft: 8, letterSpacing: '0.04em' }}>Y / Enter</span>
                     </button>
                 </div>
@@ -211,7 +216,7 @@ export default function PosPayModal({
     );
 }
 
-function TunaiSection({ cashRef, cashInput, setCashInput, handleConfirmPay, grandTotal, cashNum, kembalian }) {
+function TunaiSection({ cashRef, cashInput, setCashInput, handleConfirmPay, grandTotal, cashNum, kembalian, isSubmitting }) {
     const cashNum_ = parseInt(cashInput, 10);
     const displayValue = cashInput && !isNaN(cashNum_)
         ? new Intl.NumberFormat('id-ID').format(cashNum_)
@@ -256,6 +261,7 @@ function TunaiSection({ cashRef, cashInput, setCashInput, handleConfirmPay, gran
                 }}
                 placeholder="Rp 0"
                 className="pos-modal-input"
+                disabled={isSubmitting}
             />
 
             <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
